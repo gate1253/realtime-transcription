@@ -1,0 +1,6 @@
+name = "realtime-transcription"
+main = "src/index.js"
+compat_date = "2024-09-23"
+
+[ai]
+binding = "AI"

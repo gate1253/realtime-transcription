@@ -1,0 +1,44 @@
+name: Deploy Realtime Transcription Worker
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Create wrangler.toml from secrets
+        env:
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+        run: |
+          cat > wrangler.toml <<EOF
+          name = "realtime-transcription"
+          main = "src/index.js"
+          compatibility_date = "2024-09-23"
+          account_id = "${CF_ACCOUNT_ID}"
+
+          [ai]
+          binding = "AI"
+          EOF
+          
+          echo "wrangler.toml created."
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy with Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+        run: |
+          npx wrangler deploy
