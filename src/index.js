@@ -11,21 +11,27 @@ export default {
         server.accept();
 
         server.addEventListener('message', async (event) => {
+            console.log('[Worker] Message received, type:', typeof event.data);
             try {
                 if (event.data instanceof ArrayBuffer) {
-                    const audioBuffer = new Float32Array(event.data);
-                    const audioArray = Array.from(audioBuffer);
+                    console.log('[Worker] Audio data (WAV) received, size:', event.data.byteLength);
 
+                    console.log('[Worker] Running Whisper model...');
                     const response = await env.AI.run('@cf/openai/whisper', {
-                        audio: audioArray
+                        audio: new Uint8Array(event.data)
                     });
 
                     if (response && response.text) {
+                        console.log('[Worker] Transcription successful:', response.text.trim());
                         server.send(JSON.stringify({ type: 'transcription', text: response.text.trim() }));
+                    } else {
+                        console.log('[Worker] No transcription text in response');
                     }
+                } else {
+                    console.log('[Worker] Non-binary message received:', event.data);
                 }
             } catch (e) {
-                console.error('AI Error:', e);
+                console.error('[Worker] AI Error:', e);
             }
         });
 
