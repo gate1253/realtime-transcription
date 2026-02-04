@@ -14,11 +14,17 @@ export default {
             console.log('[Worker] Message received, type:', typeof event.data);
             try {
                 if (event.data instanceof ArrayBuffer) {
-                    console.log('[Worker] Audio data (WAV) received, size:', event.data.byteLength);
+                    const uint8 = new Uint8Array(event.data);
+                    console.log('[Worker] Audio data (WAV) received, size:', event.data.byteLength, 'Uint8 length:', uint8.length);
+
+                    if (uint8.length === 0) {
+                        console.error('[Worker] Received empty buffer');
+                        return;
+                    }
 
                     console.log('[Worker] Running Whisper model...');
                     const response = await env.AI.run('@cf/openai/whisper', {
-                        audio: new Uint8Array(event.data)
+                        audio: Array.from(uint8)
                     });
 
                     if (response && response.text) {
